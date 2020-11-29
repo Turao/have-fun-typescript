@@ -1,6 +1,10 @@
 import { ConsumeEvent } from "../ports/consume-event";
 import { Queue } from "../decorators/queue";
 import { FeatureToggle } from "../decorators/feature-toggle";
+import {
+  ApplicationEventListener,
+  ApplicationEventPublisher,
+} from "../decorators/application-events";
 
 import * as dotenv from "dotenv";
 import { Publisher } from "../decorators/publisher";
@@ -29,8 +33,10 @@ export class SendMoneyUseCase
   @FeatureToggle({ enabled: true }) // self explanatory
   @Queue({ name: process.env.v1_MONEY_SENT_QUEUE as string }) // declares queue on startup
   @Publisher({ queue: process.env.v1_MONEY_SENT_QUEUE as string }) // creates publisher channel when method is called
+  @ApplicationEventPublisher("money-sent")
   send(amount: number, account: Account) {
     console.log(`Sending Money[${amount} USD] to Account[${account.number}]`);
+    return amount;
   }
 
   @FeatureToggle({ enabled: true }) // self explanatory
@@ -41,6 +47,11 @@ export class SendMoneyUseCase
     console.log(
       `Sending Money[${new_amount} USD] to Account[${account.number}]`
     );
+  }
+
+  @ApplicationEventListener("money-sent")
+  onMoneySent(amount: number) {
+    console.log(`Money[${amount}] was sent!`);
   }
 }
 
